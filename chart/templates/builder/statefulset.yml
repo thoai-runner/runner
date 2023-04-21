@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: builder
+spec:
+  serviceName: builder
+  replicas: {{ .Values.builder.replicas }}
+  selector:
+    matchLabels:
+      app: builder
+  template:
+    metadata:
+      labels:
+        app: builder
+    spec:
+      containers:
+        - name: runner
+          image: ghcr.io/thoai-runner/runner/builder
+          imagePullPolicy: Always
+          env:
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: config
+                  key: token
+            - name: DOCKER_REGISTRY_HOSTNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: config
+                  key: registryHostname
+            - name: DOCKER_REGISTRY_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: config
+                  key: registryUsername
+            - name: DOCKER_REGISTRY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: config
+                  key: registryPassword
+          volumeMounts:
+            - name: certs
+              mountPath: /certs
+            - name: data
+              mountPath: /opt/actions-runner/.docker/
+        - name: docker
+          image: docker:dind-rootless
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: certs
+              mountPath: /certs
+      volumes:
+        - name: certs
+          emptyDir:
+        - name: data
+          persistentVolumeClaim:
+            claimName: docker-login-claim

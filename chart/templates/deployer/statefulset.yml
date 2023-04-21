@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: deployer
+spec:
+  serviceName: deployer
+  replicas: {{ .Values.deployer.replicas }}
+  selector:
+    matchLabels:
+      app: deployer
+  template:
+    metadata:
+      labels:
+        app: deployer
+    spec:
+      containers:
+        - name: runner
+          image: ghcr.io/thoai-runner/runner/deployer
+          imagePullPolicy: Always
+          env:
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: config
+                  key: token

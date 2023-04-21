@@ -1,0 +1,58 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: builder-initializer
+  namespace: runner-system
+spec:
+  completions: 1
+  parallelism: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: login
+        image: ghcr.io/thoai-runner/runner/builder:latest
+        imagePullPolicy: Always
+        env:
+          - name: SECRET_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: login-secret
+                key: token
+        command:
+        - "bash"
+        - "-exc"
+        - |
+          cat << EOF > /root/.docker/config.json 
+          {
+                  "auths": {
+                          "harbor.elofun.net": {
+                                  "auth": "$(echo -n $SECRET_TOKEN | base64 -w0)"
+                          }
+                  }
+          }
+          EOF
+          chown 999:999 -R /root/.docker
+        volumeMounts:
+        - mountPath: /root/.docker
+          name: input
+      volumes:
+        - name: input
+          persistentVolumeClaim:
+            claimName: docker-login-claim
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: docker-login-claim
+  namespace: runner-system
+spec:
+  storageClassName: local-storage
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+      

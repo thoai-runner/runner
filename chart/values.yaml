@@ -1,0 +1,12 @@
+token: ''
+
+registry:
+  hostname: 'harbor.elofun.net'
+  username: 'thoai.phan'
+  password: 'kbbJwdZhhP7kXhMawFzq7KKBM3DFNX8K'
+
+deployer:
+  replicas: 2
+
+builder:
+  replicas: 2

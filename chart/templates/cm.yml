@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config
+data:
+  registryHostname: {{ .Values.registry.hostname }}
+  registryUsername: {{ .Values.registry.username }}
